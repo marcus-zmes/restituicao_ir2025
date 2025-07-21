@@ -84,6 +84,7 @@ GROUP BY 2
 --WHERE num_documento_identificacao IS NULL
 --GROUP BY 2
 
+-- investidores ativos por perfil
 -- SELECT
 -- COUNT (DISTINCT cpf) total_cpf,
 -- conv.perfil
