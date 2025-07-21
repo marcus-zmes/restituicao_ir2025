@@ -68,3 +68,10 @@ GROUP BY 2
 -- SUM (val_total_negociado)/ COUNT (DISTINCT cpf) 
 -- FROM conv
  
+--Mediana do valor investido por perfil 
+--SELECT
+--APPROX_PERCENTILE (val_total_negociado,0.5) mediana,
+--perfil
+--FROM conv
+--GROUP BY 2
+ 
