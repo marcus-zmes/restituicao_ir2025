@@ -62,4 +62,9 @@ SUM (val_total_negociado)/ COUNT (DISTINCT cpf) total_cpfs,
 perfil
 FROM conv
 GROUP BY 2
+
+-- ticket medio total
+-- SELECT
+-- SUM (val_total_negociado)/ COUNT (DISTINCT cpf) 
+-- FROM conv
  
