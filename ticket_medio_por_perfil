@@ -78,17 +78,20 @@ GROUP BY 2
 --novos investidores por perfil
 --SELECT
 --COUNT (DISTINCT cpf) total_cpf,
+-- SUM (val_total_negociado) valor,
 --conv.perfil
 --FROM conv 
 --LEFT JOIN cte1 ON conv.cpf = num_documento_identificacao
 --WHERE num_documento_identificacao IS NULL
---GROUP BY 2
+--GROUP BY 3
 
 -- investidores ativos por perfil
 -- SELECT
 -- COUNT (DISTINCT cpf) total_cpf,
+-- SUM (val_total_negociado) valor,
 -- conv.perfil
 -- FROM conv 
 -- INNER JOIN  cte1 ON conv.cpf = num_documento_identificacao
--- GROUP BY 2
+-- GROUP BY 3
+
  
