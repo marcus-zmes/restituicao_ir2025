@@ -57,11 +57,12 @@ INNER JOIN imp ON imp.cpf = LPAD(m.num_documento_identificacao,11, '0')
 WHERE m.data_operacao_titulo_publico >= DATE '2025-07-02' 
 )
 
-SELECT
-SUM (val_total_negociado)/ COUNT (DISTINCT cpf) total_cpfs,
-perfil
-FROM conv
-GROUP BY 2
+-- ticket medio por perfil
+--SELECT
+--SUM (val_total_negociado)/ COUNT (DISTINCT cpf) total_cpfs,
+--perfil
+--FROM conv
+--GROUP BY 2
 
 -- ticket medio total
 -- SELECT
@@ -94,4 +95,50 @@ GROUP BY 2
 -- INNER JOIN  cte1 ON conv.cpf = num_documento_identificacao
 -- GROUP BY 3
 
+-- taxa conversao grupo controle
+--SELECT
+--gc.flagagencia,
+--gc.lote,
+--SUM(conv_gc.val_total_negociado) valor_convertido,
+--COUNT(DISTINCT conv_gc.cpf) cpfs_convertidos,
+--COUNT(DISTINCT gc.cpf) total_cpfs,
+--(COUNT(DISTINCT conv_gc.cpf) * 100.0 / COUNT(DISTINCT gc.cpf)) AS taxa_conversao
+--FROM gc
+--LEFT JOIN conv_gc ON conv_gc.cpf = gc.cpf
+--GROUP BY 1,2
+--ORDER BY 1,2 
+
+--cpfs convertidos
+--SELECT
+--COUNT (DISTINCT cpf) total_cpfs,
+--perfil
+--FROM conv
+--GROUP BY 2
+
+--taxa conversao impactados
+--SELECT
+--imp.flagagencia,
+--imp.lote,
+--SUM(conv.val_total_negociado) valor_convertido,
+--COUNT(DISTINCT conv.cpf) cpfs_convertidos,
+--COUNT(DISTINCT imp.cpf) total_cpfs,
+--(COUNT(DISTINCT conv.cpf) * 100.0 / COUNT(DISTINCT imp.cpf)) AS taxa_conversao
+--FROM imp
+--LEFT JOIN conv ON conv.cpf = imp.cpf
+--GROUP BY 1,2
+--ORDER BY 1,2
+
+--total impactados perfil 
+--SELECT
+--COUNT (DISTINCT cpf) count_cpf, 
+--perfil
+--FROM imp
+--GROUP BY 2
+
+--valor investido por perfil
+--SELECT
+--SUM (val_total_negociado) valor,
+--perfil
+--FROM conv
+--GROUP BY 2
  
