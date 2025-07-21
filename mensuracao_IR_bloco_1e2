@@ -57,6 +57,8 @@ INNER JOIN imp ON imp.cpf = LPAD(m.num_documento_identificacao,11, '0')
 WHERE m.data_operacao_titulo_publico >= DATE '2025-07-02' 
 )
 
+--utilize a analise de acordo com a necessidade
+
 -- ticket medio por perfil
 --SELECT
 --SUM (val_total_negociado)/ COUNT (DISTINCT cpf) total_cpfs,
