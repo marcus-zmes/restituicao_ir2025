@@ -1,0 +1,116 @@
+WITH
+
+cte AS 
+(
+SELECT 
+LPAD(cpf,11,'0') cpf
+,cod_agente_custodia
+,SUM(CAST(val_estoque_titulo_publico_tesouro_direto AS DECIMAL)) valor
+,ROW_NUMBER() OVER(PARTITION BY cpf ORDER BY SUM(CAST(val_estoque_titulo_publico_tesouro_direto AS DECIMAL)) DESC) ranking
+FROM estoque_com_cpf_202507
+GROUP BY cpf, cod_agente_custodia
+),
+
+cte1 AS
+(
+SELECT 
+LPAD(e.cpf,11,'0') num_documento_identificacao
+,CASE WHEN SUM(CAST(val_estoque_titulo_publico_tesouro_direto AS DECIMAL)) > 250000 THEN 'Sofisticado'
+ELSE 'Digital' END AS perfil
+FROM estoque_com_cpf_202507 e
+GROUP BY LPAD(e.cpf,11,'0')
+)
+,
+
+imp AS (
+SELECT c.*,
+CASE 
+    WHEN clust.classificacao IN ('Digital','Sofisticado') THEN clust.classificacao
+    WHEN cte1.perfil IN ('Digital','Sofisticado') THEN cte1.perfil
+    ELSE 'Não mapeado' END AS perfil 
+FROM restituicao_ir2025_completa c 
+LEFT JOIN restituicao_ir2025_grupo_controle_completo  gc ON c.cpf = REPLACE(gc.cpf,'"','') 
+LEFT JOIN restituicao_ir2025_grupo_controle_2_lote3   gc2 ON c.cpf = REPLACE(gc2.cpf,'"','') 
+LEFT JOIN clusterizacao_2024_tratado clust ON c.cpf = LPAD(clust.CPF,11,'0')
+LEFT JOIN cte1 ON LPAD(c.cpf,11,'0') = LPAD(num_documento_identificacao,11,'0')
+
+WHERE REPLACE(gc.cpf,'"','') IS NULL AND REPLACE(gc2.cpf,'"','') IS NULL AND c.lote IN ('001','002', '003')
+),
+
+gc AS (
+SELECT
+REPLACE(gc.cpf,'"','') cpf,
+REPLACE(gc.lote,'"','') lote,
+REPLACE(gc.flagagencia,'"','') flagagencia
+FROM restituicao_ir2025_grupo_controle_completo gc 
+WHERE REPLACE(gc.lote,'"','') IN ('001','002', '003')
+),
+
+gc2 AS (
+SELECT
+REPLACE(gc.cpf,'"','') cpf,
+REPLACE(gc.lote,'"','') lote,
+REPLACE(gc.flagagencia,'"','') flagagencia,
+cte.cod_agente_custodia,
+CASE WHEN i.nr_cnpj IS NULL THEN 'Não recebeu incentivo' ELSE 'Recebeu incentivo' END AS incentivo
+FROM restituicao_ir2025_grupo_controle_2_lote3 gc
+LEFT JOIN cte ON cte.cpf = REPLACE(gc.cpf,'"','')
+LEFT JOIN depara_corretoras d ON cte.cod_agente_custodia = d.cod_operacional_participante
+LEFT JOIN corretoras_incentivo i ON cte.cod_agente_custodia = i.nr_cnpj
+WHERE cte.ranking = 1
+),
+
+conv_gc AS (
+SELECT
+LPAD(m.num_documento_identificacao,11, '0') cpf,
+gc.flagagencia,
+gc.lote,
+m.cod_agente_custodia corretora,
+d.nome_completo_razao_social, 
+CASE WHEN i.nr_cnpj IS NULL THEN 'Não recebeu incentivo' ELSE 'Recebeu incentivo' END AS incentivo,
+m.desc_tipo_titulo_publico titulo_publico,
+m.val_total_negociado
+FROM movimentacao_recente_dremio m
+INNER JOIN gc ON gc.cpf = LPAD(m.num_documento_identificacao,11, '0')
+LEFT JOIN depara_corretoras d ON m.cod_agente_custodia = d.cod_operacional_participante
+LEFT JOIN corretoras_incentivo i ON m.cod_agente_custodia = i.nr_cnpj
+WHERE(m.data_operacao_titulo_publico >= DATE '2025-07-02'AND m.data_operacao_titulo_publico <= DATE '2025-07-23' AND gc.lote IN ('001')) OR (m.data_operacao_titulo_publico >= DATE '2025-07-02' AND gc.lote IN ('002')) OR (m.data_operacao_titulo_publico >= DATE '2025-07-29' AND gc.lote IN ('003'))
+),
+
+
+conv_gc2 AS 
+(
+SELECT
+LPAD(m.num_documento_identificacao,11, '0') cpf,
+gc2.flagagencia,
+gc2.lote,
+gc2.cod_agente_custodia corretora,
+d.nome_completo_razao_social, 
+CASE WHEN i.nr_cnpj IS NULL THEN 'Não recebeu incentivo' ELSE 'Recebeu incentivo' END AS incentivo,
+m.desc_tipo_titulo_publico titulo_publico,
+m.val_total_negociado
+FROM movimentacao_recente_dremio m
+INNER JOIN gc2 ON gc2.cpf = LPAD(m.num_documento_identificacao,11, '0') AND gc2.cod_agente_custodia = m.cod_agente_custodia
+LEFT JOIN depara_corretoras d ON gc2.cod_agente_custodia = d.cod_operacional_participante
+LEFT JOIN corretoras_incentivo i ON gc2.cod_agente_custodia = i.nr_cnpj
+WHERE(m.data_operacao_titulo_publico >= DATE '2025-07-28' AND gc2.lote IN ('003'))
+
+),
+conv AS (
+SELECT DISTINCT
+LPAD(m.num_documento_identificacao,11, '0') cpf,
+imp.flagagencia,
+imp.lote,
+imp.perfil,
+m.cod_agente_custodia corretora,
+d.nome_completo_razao_social, 
+CASE WHEN i.nr_cnpj IS NULL THEN 'Não recebeu incentivo' ELSE 'Recebeu incentivo' END AS incentivo,
+m.desc_tipo_titulo_publico titulo_publico,
+m.val_total_negociado,
+m.data_operacao_titulo_publico
+FROM movimentacao_recente_dremio m
+INNER JOIN imp ON imp.cpf = LPAD(m.num_documento_identificacao,11, '0')
+LEFT JOIN depara_corretoras d ON m.cod_agente_custodia = d.cod_operacional_participante
+LEFT JOIN corretoras_incentivo i ON m.cod_agente_custodia = i.nr_cnpj
+WHERE ((m.data_operacao_titulo_publico >= DATE '2025-07-02'AND m.data_operacao_titulo_publico <= DATE '2025-07-23' AND imp.lote IN ('001')) OR (m.data_operacao_titulo_publico >= DATE '2025-07-02' AND imp.lote IN ('002')) OR (m.data_operacao_titulo_publico >= DATE '2025-07-29' AND imp.lote IN ('003'))) AND d.nome_completo_razao_social <> 'KILIMA FIC FDO. IMOB. SUNO 30'
+)
