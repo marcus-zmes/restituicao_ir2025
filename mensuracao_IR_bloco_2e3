@@ -51,13 +51,9 @@ SELECT
 REPLACE(gc.cpf,'"','') cpf,
 REPLACE(gc.lote,'"','') lote,
 REPLACE(gc.flagagencia,'"','') flagagencia,
-cte.cod_agente_custodia,
-CASE WHEN i.nr_cnpj IS NULL THEN 'Não recebeu incentivo' ELSE 'Recebeu incentivo' END AS incentivo
+cod_agente_custodia
 FROM restituicao_ir2025_grupo_controle_2_lote3 gc
 LEFT JOIN cte ON cte.cpf = REPLACE(gc.cpf,'"','')
-LEFT JOIN depara_corretoras d ON cte.cod_agente_custodia = d.cod_operacional_participante
-LEFT JOIN corretoras_incentivo i ON cte.cod_agente_custodia = i.nr_cnpj
-WHERE cte.ranking = 1
 ),
 
 conv_gc AS (
@@ -114,3 +110,5 @@ LEFT JOIN depara_corretoras d ON m.cod_agente_custodia = d.cod_operacional_parti
 LEFT JOIN corretoras_incentivo i ON m.cod_agente_custodia = i.nr_cnpj
 WHERE ((m.data_operacao_titulo_publico >= DATE '2025-07-02'AND m.data_operacao_titulo_publico <= DATE '2025-07-23' AND imp.lote IN ('001')) OR (m.data_operacao_titulo_publico >= DATE '2025-07-02' AND imp.lote IN ('002')) OR (m.data_operacao_titulo_publico >= DATE '2025-07-29' AND imp.lote IN ('003'))) AND d.nome_completo_razao_social <> 'KILIMA FIC FDO. IMOB. SUNO 30'
 )
+
+SELECT * FROM gc2
